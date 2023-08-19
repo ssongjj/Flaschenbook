@@ -1,10 +1,10 @@
 import requests
 import os
 from datetime import datetime
-import pandas as pd
 from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from utils.file_operations import save_to_csv
 
 
 # JSON 데이터를 가져오는 함수
@@ -43,15 +43,9 @@ def extract_isbn(data):
 
     for item in items:
         if item.get("pubDate") == today:
-            isbn.append(item.get("isbn13"))
+            isbn.append(str(item.get("isbn13")))
 
     return isbn
-
-
-# csv를 저장
-def save_to_csv(isbn_list, filename):
-    df = pd.DataFrame({"ISBN": isbn_list})  # 데이터프레임 생성
-    df.to_csv(filename, index=False)
 
 
 def main():
@@ -71,7 +65,7 @@ def main():
         print(f"success page number: {i}")
 
     # csv 파일 저장
-    output_path = "airflow/scripts/data/isbn"    
+    output_path = "airflow/scripts/data/isbn"   
     os.makedirs(output_path, exist_ok=True)
     csv_filename = os.path.join(output_path, f"raw+isbn+{today}+new.csv")
 

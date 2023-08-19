@@ -1,10 +1,10 @@
 import requests
 import os
 from datetime import datetime
-import pandas as pd
 from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from utils.file_operations import save_to_csv
 
 
 # JSON 데이터를 가져오는 함수
@@ -48,12 +48,6 @@ def extract_isbn(data):
     return isbns
 
 
-# csv를 저장
-def save_to_csv(isbn_list, filename):
-    df = pd.DataFrame({"ISBN": isbn_list})  # 데이터프레임 생성
-    df.to_csv(filename, index=False)
-
-
 def main():
     load_dotenv()  # env 파일 로드
 
@@ -67,7 +61,7 @@ def main():
 
     # isbn_list 생성 (나머지 페이지에 대해서)
     # 2240까지 완료 for i in range(1120, 1120 + total_page // 5 + 1):
-    for i in range(5000, total_page + 1):
+    for i in range(1, total_page + 1):
         data = get_json_data(i, api_key)
         isbn_list.extend(extract_isbn(data))
         print(f"success page number: {i}")

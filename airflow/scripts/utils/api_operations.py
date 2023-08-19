@@ -12,7 +12,7 @@ def get_isbn_list(bucket_name, object_key):
     s3_client = get_s3_client()
     response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
     csv_content = response['Body'].read().decode('utf-8')
-    df = pd.read_csv(StringIO(csv_content))
+    df = pd.read_csv(StringIO(csv_content), dtype={'ISBN': str})
     return df['ISBN'].tolist()
 
 
@@ -88,21 +88,21 @@ def fetch_api_data(isbn_list, site):
     # site별 header 설정
     if site == 'naver':
         url = "https://openapi.naver.com/v1/search/book.json"
-        naver_client_id = os.environ.get("NAVER_CLIENT_ID")
-        naver_client_secret = os.environ.get("NAVER_CLIENT_SECRET")
+        naver_client_id = os.environ.get("NAVER_CLIENT_ID_1")
+        naver_client_secret = os.environ.get("NAVER_CLIENT_SECRET_1")
         headers = {
             "X-Naver-Client-Id": naver_client_id,
             "X-Naver-Client-Secret": naver_client_secret
         }
     elif site == 'kakao':
         url = "https://dapi.kakao.com/v3/search/book"
-        kakao_rest_api_key = os.environ.get("KAKAO_REST_API_KEY")
+        kakao_rest_api_key = os.environ.get("KAKAO_REST_API_KEY_1")
         headers = {
             "Authorization": f'KakaoAK {kakao_rest_api_key}'
         }
 
     for i, isbn in enumerate(isbn_list):
-        if site == 'naver' and len(isbn) == 10:
+        if site == 'naver':
             continue
 
         if site == 'naver':
@@ -128,7 +128,7 @@ def fetch_api_data(isbn_list, site):
             }
 
         if site == 'naver':
-            time.sleep(0.2)
+            time.sleep(0.1)
 
         try:
             response = requests.get(url, headers=headers, params=params)
@@ -138,16 +138,16 @@ def fetch_api_data(isbn_list, site):
 
         book_info = response.json()
         if site == 'naver' and book_info['total'] == 0:
-            print(f'{site} {i}번째 book info 없음')
+            print(f'{site} {i} 번째 {isbn} book info 없음!')
             continue
         elif site == 'kakao' and book_info['meta']['total_count'] == 0:
-            print(f'{site} {i}번째 book info 없음')
+            print(f'{site} {i} 번째 {isbn} book info 없음!')
             continue
-        elif site == 'aladin' and book_info['errorCode'] == 8:
-            print(f'{site} {i}번째 book info 없음')
+        elif site == 'aladin' and book_info.get('errorCode') == 8:
+            print(f'{site} {i}번째 book info 없음 isbn: {isbn}')
             continue
-            
+
         books['items'].append(book_info)
-        print(f'{site} {i}번째 book info 수집')
+        print(f'{site} {i} 번째 {isbn} book info 수집')
 
     return books
